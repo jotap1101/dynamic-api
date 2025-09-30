@@ -111,10 +111,15 @@ DATABASES = {
 ALLOWED_DATABASES = ["default", "db1", "db2", "db3"]
 
 ALLOWED_MODELS = {
-    "auth": ["User"],
-    "app1": ["Product", "Category"],
-    "app2": ["Species", "Breed", "Animal"],
-    "app3": ["Genre", "Movie"],
+    "user": "auth.User",
+    "group": "auth.Group",
+    "category": "app1.Category",
+    "product": "app1.Product",
+    "species": "app2.Species",
+    "breed": "app2.Breed",
+    "animal": "app2.Animal",
+    "genre": "app3.Genre",
+    "movie": "app3.Movie",
 }
 
 DATABASE_ROUTERS = ["config.database_router.DatabaseRouter"]

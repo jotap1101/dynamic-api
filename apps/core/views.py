@@ -1,77 +1,91 @@
 from django.conf import settings
-from rest_framework import viewsets, status
-from rest_framework.response import Response
+from django.db import OperationalError
+from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import NotFound, ParseError, PermissionDenied
-from apps.core.utils import get_dynamic_model
-from apps.core.serializers import get_dynamic_serializer
+from rest_framework.exceptions import NotFound
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
+
+from .serializers import get_dynamic_serializer
+from .utils import get_dynamic_model
 
 
-# Create your views here.
-class DynamicModelViewSet(viewsets.ModelViewSet):
+class DynamicModelViewSet(ModelViewSet):
     """
-    A viewset that provides the standard actions for dynamically selected models.
-    The model is determined by the 'model' query parameter in the request.
+    ViewSet genérico que acessa dinamicamente um banco e uma tabela.
     """
 
     def initial(self, request, *args, **kwargs):
-        self.db_name = kwargs.get("db_name", "default")
-        self.model_name = kwargs.get("model_name")
+        self.db_name = kwargs.get("db_name")
+        self.table_name = kwargs.get("table_name")
 
+        # valida banco
         if self.db_name not in settings.ALLOWED_DATABASES:
-            raise PermissionDenied(detail=f"Database '{self.db_name}' is not allowed.")
-        
-        if not self.model_name:
-            raise ParseError(detail="Model name must be provided as a query parameter.")
-        
-        try:
-            self.model = get_dynamic_model(self.model_name)
-        except LookupError as e:
-            raise NotFound(detail=str(e))
-        except Exception as e:
-            raise ParseError(detail=f"Error retrieving model '{self.model_name}': {str(e)}")
-        
-        self.serializer_class = get_dynamic_serializer(self.model)
+            self.permission_denied(
+                request, message=f"Banco '{self.db_name}' não permitido."
+            )
 
-        super().initial(request, *args, **kwargs)
-    
+        # valida model
+        try:
+            self.model = get_dynamic_model(self.table_name)
+        except LookupError as e:
+            self.permission_denied(request, message=str(e))
+
+        self.serializer_class = get_dynamic_serializer(self.model)
+        return super().initial(request, *args, **kwargs)
+
     def get_queryset(self):
         try:
             return self.model.objects.using(self.db_name).all()
+        except OperationalError:
+            # tabela não existe no banco
+
+            raise NotFound(
+                detail=f"Tabela '{self.table_name}' não existe no banco '{self.db_name}'. "
+                f"Verifique se as migrations foram aplicadas."
+            )
         except Exception as e:
-            raise Exception(f"Error accessing database '{self.db_name}': {str(e)}")
-        
+            # erro inesperado
+            from rest_framework.exceptions import APIException
+
+            raise APIException(detail=str(e))
+
     def perform_create(self, serializer):
-        serializer.save(using=self.db_name)
+        try:
+            serializer.save(using=self.db_name)
+        except OperationalError:
+            raise NotFound(
+                detail=f"Não foi possível criar: tabela '{self.table_name}' "
+                f"não existe no banco '{self.db_name}'."
+            )
 
     def perform_update(self, serializer):
-        serializer.save(using=self.db_name)
+        try:
+            serializer.save(using=self.db_name)
+        except OperationalError:
+            raise NotFound(
+                detail=f"Não foi possível atualizar: tabela '{self.table_name}' "
+                f"não existe no banco '{self.db_name}'."
+            )
 
     def perform_destroy(self, instance):
-        instance.delete(using=self.db_name)
+        try:
+            instance.delete(using=self.db_name)
+        except OperationalError:
+            raise NotFound(
+                detail=f"Não foi possível excluir: tabela '{self.table_name}' "
+                f"não existe no banco '{self.db_name}'."
+            )
 
-    @action(detail=False, methods=['get'])
-    def list_models(self, request, *args, **kwargs):
-        """
-        List all allowed models.
-        """
-        return Response({"allowed_models": list(settings.ALLOWED_MODELS.keys())})
-    
-    @action(detail=False, methods=['get'])
-    def list_databases(self, request, *args, **kwargs):
-        """
-        List all allowed databases.
-        """
-    @action(detail=False, methods=['get'])
-    def list_models(self, request):
-        """
-        List all allowed models.
-        """
-        return Response({"allowed_models": list(settings.ALLOWED_MODELS.keys())})
-    
-    @action(detail=False, methods=['get'])
-    def list_databases(self, request):
-        """
-        List all allowed databases.
-        """
-        return Response({"allowed_databases": settings.ALLOWED_DATABASES})
+    @action(detail=False, methods=["get"])
+    def count(self, request, *args, **kwargs):
+        try:
+            count = self.get_queryset().count()
+            return Response({"table": self.table_name, "count": count})
+        except OperationalError:
+            return Response(
+                {
+                    "error": f"Tabela '{self.table_name}' não existe no banco '{self.db_name}'."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
