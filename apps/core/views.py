@@ -16,7 +16,7 @@ class DynamicModelViewSet(viewsets.ModelViewSet):
 
     def initial(self, request, *args, **kwargs):
         self.db_name = kwargs.get("db_name", "default")
-        self.model_name = request.query_params.get("model")
+        self.model_name = kwargs.get("model_name")
 
         if self.db_name not in settings.ALLOWED_DATABASES:
             raise PermissionDenied(detail=f"Database '{self.db_name}' is not allowed.")

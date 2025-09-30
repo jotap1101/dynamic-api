@@ -46,6 +46,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Third-party apps
+    "rest_framework",
+    "corsheaders",
+    # Local apps
     "apps.core.apps.CoreConfig",
     "apps.app1.apps.App1Config",
     "apps.app2.apps.App2Config",
@@ -107,9 +111,10 @@ DATABASES = {
 ALLOWED_DATABASES = ["default", "db1", "db2", "db3"]
 
 ALLOWED_MODELS = {
-    "user": "auth.User",
-    "product": "app1.Product",
-    "category": "app1.Category",
+    "auth": ["User"],
+    "app1": ["Product", "Category"],
+    "app2": ["Species", "Breed", "Animal"],
+    "app3": ["Genre", "Movie"],
 }
 
 DATABASE_ROUTERS = ["config.database_router.DatabaseRouter"]
