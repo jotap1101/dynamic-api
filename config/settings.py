@@ -52,6 +52,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "rest_framework_simplejwt",
+    "drf_spectacular",
+    "drf_spectacular_sidecar",
     # Local apps
     "apps.core.apps.CoreConfig",
     "apps.app1.apps.App1Config",
@@ -142,7 +144,6 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
@@ -162,6 +163,7 @@ REST_FRAMEWORK = {
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
     "DEFAULT_VERSION": "v1",
     "ALLOWED_VERSIONS": ["v1"],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 # JWT settings
@@ -193,3 +195,22 @@ CORS_ALLOWED_ORIGINS = env.list(
     ],
 )
 CORS_ALLOW_CREDENTIALS = True
+
+# Spectacular settings
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Dynamic API Documentation",
+    "DESCRIPTION": "API that enables dynamic database and model access through URL patterns",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "SWAGGER_UI_DIST": "SIDECAR",  # Usar drf-spectacular-sidecar
+    "SWAGGER_UI_FAVICON_HREF": "SIDECAR",
+    "REDOC_DIST": "SIDECAR",
+    # Componentes personalizados
+    "COMPONENT_SPLIT_REQUEST": True,
+    "COMPONENT_NO_READ_ONLY_REQUIRED": False,
+    # Configurações de segurança
+    "SECURITY": [{"bearerAuth": []}],
+    "SERVERS": [
+        {"url": "http://localhost:8000", "description": "Local Development Server"}
+    ],
+}

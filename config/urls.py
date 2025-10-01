@@ -17,8 +17,38 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import include, path
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+    TokenVerifyView,
+)
+
+prefix = "api/v1/"
 
 urlpatterns = [
+    # Admin site
     path("admin/", admin.site.urls),
-    path("api/v1/", include("apps.core.urls")),
+    # JWT Authentication endpoints
+    path(f"{prefix}token/", TokenObtainPairView.as_view(), name="token_obtain"),
+    path(f"{prefix}token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path(f"{prefix}token/verify/", TokenVerifyView.as_view(), name="token_verify"),
+    # Dynamic API endpoints
+    path(f"{prefix}", include("apps.core.urls")),
+    # API schema and documentation
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path(
+        "api/schema/swagger-ui/",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger-ui",
+    ),
+    path(
+        "api/schema/redoc/",
+        SpectacularRedocView.as_view(url_name="schema"),
+        name="redoc",
+    ),
 ]
