@@ -23,6 +23,7 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 from rest_framework_simplejwt.views import (
+    TokenBlacklistView,
     TokenObtainPairView,
     TokenRefreshView,
     TokenVerifyView,
@@ -37,6 +38,11 @@ urlpatterns = [
     path(f"{prefix}token/", TokenObtainPairView.as_view(), name="token_obtain"),
     path(f"{prefix}token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path(f"{prefix}token/verify/", TokenVerifyView.as_view(), name="token_verify"),
+    path(
+        f"{prefix}token/blacklist/",
+        TokenBlacklistView.as_view(),
+        name="token_blacklist",
+    ),
     # Dynamic API endpoints
     path(f"{prefix}", include("apps.core.urls")),
     # API schema and documentation
