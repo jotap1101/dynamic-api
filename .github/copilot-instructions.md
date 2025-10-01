@@ -2,14 +2,22 @@
 
 ## Project Overview
 
-This is a Django-based REST API project with a modular structure organized into apps. The project uses Django REST Framework (DRF) for API development and follows a structured approach to building dynamic APIs.
+This is a Django-based REST API project that enables dynamic database and model access through URL patterns. The project uses Django REST Framework (DRF) and follows a multi-database architecture where different apps use separate databases. The core API is built to dynamically route requests to appropriate databases and models based on URL parameters.
 
 ## Project Structure
 
 - `config/` - Core Django project configuration
 - `apps/` - Main application modules
-  - `core/` - Central application module
-  - Additional modular apps (`app1`, `app2`, `app3`)
+  - `core/` - Central API module with dynamic routing
+  - `app1/` - First context module using database 'db1'
+  - `app2/` - Second context module using database 'db2'
+  - `app3/` - Third context module using database 'db3'
+
+### Database Architecture
+
+- Each app (except core) has its own dedicated database
+- Default database contains Django's built-in tables (auth, admin, etc.)
+- Database routing is handled through URL patterns: `/api/v1/<database_name_or_alias>/<model_name_or_alias>/`
 
 ## Key Technologies & Dependencies
 
@@ -18,6 +26,7 @@ This is a Django-based REST API project with a modular structure organized into 
 - API Documentation (drf-spectacular)
 - Redis for caching
 - Environment management with django-environ
+- CORS handling with django-cors-headers
 
 ## Development Environment Setup
 
@@ -49,13 +58,16 @@ This is a Django-based REST API project with a modular structure organized into 
 1. App Organization:
 
    - Each app follows standard Django structure with models, views, urls
-   - Core functionality in `apps.core`
-   - Additional apps modularized for specific features
+   - Core functionality in `apps.core` handles API routing and authentication
+   - Context apps (`app1`, `app2`, `app3`) contain models and business logic
 
 2. API Development:
-   - Uses DRF for API endpoints
-   - API documentation with drf-spectacular
-   - JWT for authentication
+   - Uses DRF ModelViewSets and ModelSerializers for CRUD operations
+   - Dynamic routing based on database and model aliases
+   - Custom actions with `@action` decorator for non-CRUD operations
+   - RESTful conventions for endpoint design
+   - Protected access using JWT authentication
+   - CORS configuration for controlled cross-origin access
 
 ## Common Development Tasks
 
@@ -71,10 +83,12 @@ This is a Django-based REST API project with a modular structure organized into 
    - Main URLs defined in `config/urls.py`
    - App-specific URLs in respective `app_name/urls.py`
 
-2. Authentication:
+2. Authentication & Security:
 
-   - JWT-based authentication system
+   - JWT-based authentication using djangorestframework_simplejwt
    - Token configuration in settings
+   - CORS configuration via django-cors-headers
+   - Custom permissions to secure database/model access
 
 3. Caching:
    - Redis integration for caching
@@ -86,3 +100,7 @@ This is a Django-based REST API project with a modular structure organized into 
 2. Follow Django's app-based modular structure
 3. Implement proper API versioning
 4. Use Django's built-in testing framework
+5. Follow RESTful conventions for endpoint design
+6. Secure database and model access through proper authentication and permissions
+7. Use custom actions (@action decorator) for non-CRUD operations within ViewSets
+8. Keep database context isolated within respective apps
