@@ -46,9 +46,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # Third-party apps
-    "rest_framework",
-    "corsheaders",
     # Local apps
     "apps.core.apps.CoreConfig",
     "apps.app1.apps.App1Config",
@@ -107,22 +104,6 @@ DATABASES = {
         "NAME": BASE_DIR / env("DB3_NAME", default="db3.sqlite3"),
     },
 }
-
-ALLOWED_DATABASES = ["default", "db1", "db2", "db3"]
-
-ALLOWED_MODELS = {
-    "user": "auth.User",
-    "group": "auth.Group",
-    "category": "app1.Category",
-    "product": "app1.Product",
-    "species": "app2.Species",
-    "breed": "app2.Breed",
-    "animal": "app2.Animal",
-    "genre": "app3.Genre",
-    "movie": "app3.Movie",
-}
-
-DATABASE_ROUTERS = ["config.database_router.DatabaseRouter"]
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
