@@ -197,6 +197,24 @@ class DynamicModelViewSet(viewsets.ModelViewSet):
     serializer_class = DynamicModelSerializer
     lookup_field = "id"
 
+    def initial(self, request, *args, **kwargs):
+        """
+        Runs before any other action.
+        Validates required query parameters.
+        """
+        super().initial(request, *args, **kwargs)
+
+        # Collect all validation errors
+        errors = {}
+        if not request.query_params.get("db"):
+            errors["db"] = "Database parameter is required"
+        if not request.query_params.get("table"):
+            errors["table"] = "Table parameter is required"
+
+        # Raise validation error with all missing parameters
+        if errors:
+            raise ValidationError(errors)
+
     def get_queryset(self):
         """
         Get the list of items for this view.
@@ -207,12 +225,6 @@ class DynamicModelViewSet(viewsets.ModelViewSet):
             # Obtém os parâmetros da query string
             database_name = self.request.query_params.get("db")
             model_name = self.request.query_params.get("table")
-
-            # Validação dos parâmetros obrigatórios
-            if not database_name:
-                raise ValidationError({"db": "Database parameter is required"})
-            if not model_name:
-                raise ValidationError({"table": "Table parameter is required"})
 
             # Get model class based on URL parameters
             model = get_model_from_path(database_name, model_name)
@@ -246,12 +258,6 @@ class DynamicModelViewSet(viewsets.ModelViewSet):
         serializer_class = self.get_serializer_class()
         database = self.request.query_params.get("db")
         model_name = self.request.query_params.get("table")
-
-        # Validação dos parâmetros obrigatórios
-        if not database:
-            raise ValidationError({"db": "Database parameter is required"})
-        if not model_name:
-            raise ValidationError({"table": "Table parameter is required"})
 
         # Get model class based on URL parameters
         model = get_model_from_path(database, model_name)
