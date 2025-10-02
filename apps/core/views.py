@@ -33,6 +33,26 @@ common_parameters = [
     ),
 ]
 
+# Parâmetros de paginação
+pagination_parameters = [
+    OpenApiParameter(
+        name="page",
+        description="Número da página a ser retornada",
+        required=False,
+        type=int,
+        location=OpenApiParameter.QUERY,
+        default=1,
+    ),
+    OpenApiParameter(
+        name="page_size",
+        description="Número de registros por página (máx: 100)",
+        required=False,
+        type=int,
+        location=OpenApiParameter.QUERY,
+        default=10,
+    ),
+]
+
 # Parâmetro ID para operações que precisam dele
 id_parameter = OpenApiParameter(
     name="id",
@@ -46,14 +66,30 @@ id_parameter = OpenApiParameter(
 @extend_schema_view(
     list=extend_schema(
         summary="List objects",
-        description="Retrieve a list of objects from the specified database and model.",
-        parameters=common_parameters,
+        description=(
+            "Retrieve a paginated list of objects from the specified database and model. "
+            "Use 'page' parameter to navigate through pages and 'page_size' to control "
+            "the number of items per page (max: 100)."
+        ),
+        parameters=common_parameters + pagination_parameters,
         tags=["Dynamic API"],
         responses={
             200: inline_serializer(
                 name="DynamicListResponse",
                 fields={
-                    "results": serializers.ListField(child=serializers.DictField())
+                    "count": serializers.IntegerField(
+                        help_text="Total number of items"
+                    ),
+                    "next": serializers.URLField(
+                        help_text="URL for next page", allow_null=True
+                    ),
+                    "previous": serializers.URLField(
+                        help_text="URL for previous page", allow_null=True
+                    ),
+                    "results": serializers.ListField(
+                        child=serializers.JSONField(help_text="Object data"),
+                        help_text="List of objects matching the query",
+                    ),
                 },
             )
         },

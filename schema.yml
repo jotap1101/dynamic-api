@@ -7,394 +7,402 @@ paths:
   /api/v1/{database}/{model}/:
     get:
       operationId: v1_list
-      description: Retrieve a list of objects from the specified database and model.
+      description: 'Retrieve a paginated list of objects from the specified database
+        and model. Use ''page'' parameter to navigate through pages and ''page_size''
+        to control the number of items per page (max: 100).'
       summary: List objects
       parameters:
-        - in: path
-          name: database
-          schema:
-            type: string
-            enum:
-              - db1
-              - db2
-              - db3
-              - default
-          description: "Nome do banco de dados (ex: 'default', 'db1', 'db2', 'db3')"
-          required: true
-        - in: path
-          name: model
-          schema:
-            type: string
-          description: "Nome do modelo a ser acessado (ex: 'category', 'product')"
-          required: true
+      - in: path
+        name: database
+        schema:
+          type: string
+          enum:
+          - db1
+          - db2
+          - db3
+          - default
+        description: 'Nome do banco de dados (ex: ''default'', ''db1'', ''db2'', ''db3'')'
+        required: true
+      - in: path
+        name: model
+        schema:
+          type: string
+        description: 'Nome do modelo a ser acessado (ex: ''category'', ''product'')'
+        required: true
+      - in: query
+        name: page
+        schema:
+          type: integer
+          default: 1
+        description: Número da página a ser retornada
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          default: 10
+        description: 'Número de registros por página (máx: 100)'
       tags:
-        - Dynamic API
+      - Dynamic API
       security:
-        - jwtAuth: []
-        - bearerAuth: []
+      - jwtAuth: []
+      - bearerAuth: []
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/DynamicListResponse"
-          description: ""
+                $ref: '#/components/schemas/PaginatedDynamicListResponseList'
+          description: ''
     post:
       operationId: v1_create
       description: Create a new object in the specified database and model.
       summary: Create object
       parameters:
-        - in: path
-          name: database
-          schema:
-            type: string
-            enum:
-              - db1
-              - db2
-              - db3
-              - default
-          description: "Nome do banco de dados (ex: 'default', 'db1', 'db2', 'db3')"
-          required: true
-        - in: path
-          name: model
-          schema:
-            type: string
-          description: "Nome do modelo a ser acessado (ex: 'category', 'product')"
-          required: true
+      - in: path
+        name: database
+        schema:
+          type: string
+          enum:
+          - db1
+          - db2
+          - db3
+          - default
+        description: 'Nome do banco de dados (ex: ''default'', ''db1'', ''db2'', ''db3'')'
+        required: true
+      - in: path
+        name: model
+        schema:
+          type: string
+        description: 'Nome do modelo a ser acessado (ex: ''category'', ''product'')'
+        required: true
       tags:
-        - Dynamic API
+      - Dynamic API
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DynamicCreateRequestRequest"
+              $ref: '#/components/schemas/DynamicCreateRequestRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/DynamicCreateRequestRequest"
+              $ref: '#/components/schemas/DynamicCreateRequestRequest'
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/DynamicCreateRequestRequest"
+              $ref: '#/components/schemas/DynamicCreateRequestRequest'
         required: true
       security:
-        - jwtAuth: []
-        - bearerAuth: []
+      - jwtAuth: []
+      - bearerAuth: []
       responses:
-        "201":
+        '201':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DynamicCreateResponse"
-          description: ""
+                $ref: '#/components/schemas/DynamicCreateResponse'
+          description: ''
   /api/v1/{database}/{model}/{id}/:
     get:
       operationId: dynamic_retrieve
-      description:
-        Retrieve a specific object by ID from the specified database and
+      description: Retrieve a specific object by ID from the specified database and
         model.
       summary: Get object
       parameters:
-        - in: path
-          name: database
-          schema:
-            type: string
-            enum:
-              - db1
-              - db2
-              - db3
-              - default
-          description: "Nome do banco de dados (ex: 'default', 'db1', 'db2', 'db3')"
-          required: true
-        - in: path
-          name: id
-          schema:
-            type: string
-            format: uuid
-          description: UUID do objeto
-          required: true
-        - in: path
-          name: model
-          schema:
-            type: string
-          description: "Nome do modelo a ser acessado (ex: 'category', 'product')"
-          required: true
+      - in: path
+        name: database
+        schema:
+          type: string
+          enum:
+          - db1
+          - db2
+          - db3
+          - default
+        description: 'Nome do banco de dados (ex: ''default'', ''db1'', ''db2'', ''db3'')'
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: UUID do objeto
+        required: true
+      - in: path
+        name: model
+        schema:
+          type: string
+        description: 'Nome do modelo a ser acessado (ex: ''category'', ''product'')'
+        required: true
       tags:
-        - Dynamic API
+      - Dynamic API
       security:
-        - jwtAuth: []
-        - bearerAuth: []
+      - jwtAuth: []
+      - bearerAuth: []
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DynamicRetrieveResponse"
-          description: ""
+                $ref: '#/components/schemas/DynamicRetrieveResponse'
+          description: ''
     put:
       operationId: v1_update
-      description:
-        Update all fields of a specific object in the specified database
+      description: Update all fields of a specific object in the specified database
         and model.
       summary: Update object
       parameters:
-        - in: path
-          name: database
-          schema:
-            type: string
-            enum:
-              - db1
-              - db2
-              - db3
-              - default
-          description: "Nome do banco de dados (ex: 'default', 'db1', 'db2', 'db3')"
-          required: true
-        - in: path
-          name: id
-          schema:
-            type: string
-            format: uuid
-          description: UUID do objeto
-          required: true
-        - in: path
-          name: model
-          schema:
-            type: string
-          description: "Nome do modelo a ser acessado (ex: 'category', 'product')"
-          required: true
+      - in: path
+        name: database
+        schema:
+          type: string
+          enum:
+          - db1
+          - db2
+          - db3
+          - default
+        description: 'Nome do banco de dados (ex: ''default'', ''db1'', ''db2'', ''db3'')'
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: UUID do objeto
+        required: true
+      - in: path
+        name: model
+        schema:
+          type: string
+        description: 'Nome do modelo a ser acessado (ex: ''category'', ''product'')'
+        required: true
       tags:
-        - Dynamic API
+      - Dynamic API
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DynamicUpdateRequestRequest"
+              $ref: '#/components/schemas/DynamicUpdateRequestRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/DynamicUpdateRequestRequest"
+              $ref: '#/components/schemas/DynamicUpdateRequestRequest'
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/DynamicUpdateRequestRequest"
+              $ref: '#/components/schemas/DynamicUpdateRequestRequest'
         required: true
       security:
-        - jwtAuth: []
-        - bearerAuth: []
+      - jwtAuth: []
+      - bearerAuth: []
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DynamicUpdateResponse"
-          description: ""
+                $ref: '#/components/schemas/DynamicUpdateResponse'
+          description: ''
     patch:
       operationId: v1_partial_update
-      description:
-        Update specific fields of an object in the specified database and
+      description: Update specific fields of an object in the specified database and
         model.
       summary: Partial update object
       parameters:
-        - in: path
-          name: database
-          schema:
-            type: string
-            enum:
-              - db1
-              - db2
-              - db3
-              - default
-          description: "Nome do banco de dados (ex: 'default', 'db1', 'db2', 'db3')"
-          required: true
-        - in: path
-          name: id
-          schema:
-            type: string
-            format: uuid
-          description: UUID do objeto
-          required: true
-        - in: path
-          name: model
-          schema:
-            type: string
-          description: "Nome do modelo a ser acessado (ex: 'category', 'product')"
-          required: true
+      - in: path
+        name: database
+        schema:
+          type: string
+          enum:
+          - db1
+          - db2
+          - db3
+          - default
+        description: 'Nome do banco de dados (ex: ''default'', ''db1'', ''db2'', ''db3'')'
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: UUID do objeto
+        required: true
+      - in: path
+        name: model
+        schema:
+          type: string
+        description: 'Nome do modelo a ser acessado (ex: ''category'', ''product'')'
+        required: true
       tags:
-        - Dynamic API
+      - Dynamic API
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PatchedDynamicPatchRequestRequest"
+              $ref: '#/components/schemas/PatchedDynamicPatchRequestRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/PatchedDynamicPatchRequestRequest"
+              $ref: '#/components/schemas/PatchedDynamicPatchRequestRequest'
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/PatchedDynamicPatchRequestRequest"
+              $ref: '#/components/schemas/PatchedDynamicPatchRequestRequest'
       security:
-        - jwtAuth: []
-        - bearerAuth: []
+      - jwtAuth: []
+      - bearerAuth: []
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DynamicPatchResponse"
-          description: ""
+                $ref: '#/components/schemas/DynamicPatchResponse'
+          description: ''
     delete:
       operationId: v1_destroy
       description: Delete a specific object from the specified database and model.
       summary: Delete object
       parameters:
-        - in: path
-          name: database
-          schema:
-            type: string
-            enum:
-              - db1
-              - db2
-              - db3
-              - default
-          description: "Nome do banco de dados (ex: 'default', 'db1', 'db2', 'db3')"
-          required: true
-        - in: path
-          name: id
-          schema:
-            type: string
-            format: uuid
-          description: UUID do objeto
-          required: true
-        - in: path
-          name: model
-          schema:
-            type: string
-          description: "Nome do modelo a ser acessado (ex: 'category', 'product')"
-          required: true
+      - in: path
+        name: database
+        schema:
+          type: string
+          enum:
+          - db1
+          - db2
+          - db3
+          - default
+        description: 'Nome do banco de dados (ex: ''default'', ''db1'', ''db2'', ''db3'')'
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: UUID do objeto
+        required: true
+      - in: path
+        name: model
+        schema:
+          type: string
+        description: 'Nome do modelo a ser acessado (ex: ''category'', ''product'')'
+        required: true
       tags:
-        - Dynamic API
+      - Dynamic API
       security:
-        - jwtAuth: []
-        - bearerAuth: []
+      - jwtAuth: []
+      - bearerAuth: []
       responses:
-        "204":
+        '204':
           description: No response body
   /api/v1/token/:
     post:
       operationId: v1_token_create
-      description:
-        Obtain a new JWT access and refresh token pair by providing valid
+      description: Obtain a new JWT access and refresh token pair by providing valid
         user credentials.
       summary: Obtain JWT token pair
       tags:
-        - Authentication
+      - Authentication
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TokenObtainRequestRequest"
+              $ref: '#/components/schemas/TokenObtainRequestRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/TokenObtainRequestRequest"
+              $ref: '#/components/schemas/TokenObtainRequestRequest'
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/TokenObtainRequestRequest"
+              $ref: '#/components/schemas/TokenObtainRequestRequest'
         required: true
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TokenObtainResponse"
-          description: ""
+                $ref: '#/components/schemas/TokenObtainResponse'
+          description: ''
   /api/v1/token/blacklist/:
     post:
       operationId: v1_token_blacklist_create
       description: Blacklist a JWT refresh token to prevent its further use.
       summary: Blacklist JWT refresh token
       tags:
-        - Authentication
+      - Authentication
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TokenBlacklistActionRequestRequest"
+              $ref: '#/components/schemas/TokenBlacklistActionRequestRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/TokenBlacklistActionRequestRequest"
+              $ref: '#/components/schemas/TokenBlacklistActionRequestRequest'
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/TokenBlacklistActionRequestRequest"
+              $ref: '#/components/schemas/TokenBlacklistActionRequestRequest'
         required: true
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       responses:
-        "204":
+        '204':
           description: No response body
-        "401":
+        '401':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TokenBlacklistError"
-          description: ""
+                $ref: '#/components/schemas/TokenBlacklistError'
+          description: ''
   /api/v1/token/refresh/:
     post:
       operationId: v1_token_refresh_create
       description: Refresh the JWT access token using a valid refresh token.
       summary: Refresh JWT access token
       tags:
-        - Authentication
+      - Authentication
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TokenRefreshRequestRequest"
+              $ref: '#/components/schemas/TokenRefreshRequestRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/TokenRefreshRequestRequest"
+              $ref: '#/components/schemas/TokenRefreshRequestRequest'
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/TokenRefreshRequestRequest"
+              $ref: '#/components/schemas/TokenRefreshRequestRequest'
         required: true
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TokenRefreshResponse"
-          description: ""
+                $ref: '#/components/schemas/TokenRefreshResponse'
+          description: ''
   /api/v1/token/verify/:
     post:
       operationId: v1_token_verify_create
       description: Verify if a JWT token is valid and not expired.
       summary: Verify JWT token
       tags:
-        - Authentication
+      - Authentication
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TokenVerifyRequestRequest"
+              $ref: '#/components/schemas/TokenVerifyRequestRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/TokenVerifyRequestRequest"
+              $ref: '#/components/schemas/TokenVerifyRequestRequest'
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/TokenVerifyRequestRequest"
+              $ref: '#/components/schemas/TokenVerifyRequestRequest'
         required: true
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       responses:
-        "200":
+        '200':
           description: No response body
-        "401":
+        '401':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TokenVerifyError"
-          description: ""
+                $ref: '#/components/schemas/TokenVerifyError'
+          description: ''
 components:
   schemas:
     DynamicCreateRequestRequest:
@@ -404,7 +412,7 @@ components:
           type: object
           additionalProperties: {}
       required:
-        - data
+      - data
     DynamicCreateResponse:
       type: object
       properties:
@@ -412,17 +420,33 @@ components:
           type: object
           additionalProperties: {}
       required:
-        - data
+      - data
     DynamicListResponse:
       type: object
       properties:
+        count:
+          type: integer
+          description: Total number of items
+        next:
+          type: string
+          format: uri
+          nullable: true
+          description: URL for next page
+        previous:
+          type: string
+          format: uri
+          nullable: true
+          description: URL for previous page
         results:
           type: array
           items:
-            type: object
-            additionalProperties: {}
+            description: Object data
+          description: List of objects matching the query
       required:
-        - results
+      - count
+      - next
+      - previous
+      - results
     DynamicPatchResponse:
       type: object
       properties:
@@ -430,7 +454,7 @@ components:
           type: object
           additionalProperties: {}
       required:
-        - data
+      - data
     DynamicRetrieveResponse:
       type: object
       properties:
@@ -438,7 +462,7 @@ components:
           type: object
           additionalProperties: {}
       required:
-        - data
+      - data
     DynamicUpdateRequestRequest:
       type: object
       properties:
@@ -446,7 +470,7 @@ components:
           type: object
           additionalProperties: {}
       required:
-        - data
+      - data
     DynamicUpdateResponse:
       type: object
       properties:
@@ -454,7 +478,30 @@ components:
           type: object
           additionalProperties: {}
       required:
-        - data
+      - data
+    PaginatedDynamicListResponseList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DynamicListResponse'
     PatchedDynamicPatchRequestRequest:
       type: object
       properties:
@@ -469,7 +516,7 @@ components:
           minLength: 1
           description: JWT refresh token to blacklist
       required:
-        - refresh
+      - refresh
     TokenBlacklistError:
       type: object
       properties:
@@ -480,8 +527,8 @@ components:
           type: string
           description: Error code
       required:
-        - code
-        - detail
+      - code
+      - detail
     TokenObtainRequestRequest:
       type: object
       properties:
@@ -492,8 +539,8 @@ components:
           type: string
           minLength: 1
       required:
-        - password
-        - username
+      - password
+      - username
     TokenObtainResponse:
       type: object
       properties:
@@ -502,8 +549,8 @@ components:
         refresh:
           type: string
       required:
-        - access
-        - refresh
+      - access
+      - refresh
     TokenRefreshRequestRequest:
       type: object
       properties:
@@ -511,14 +558,14 @@ components:
           type: string
           minLength: 1
       required:
-        - refresh
+      - refresh
     TokenRefreshResponse:
       type: object
       properties:
         access:
           type: string
       required:
-        - access
+      - access
     TokenVerifyError:
       type: object
       properties:
@@ -529,8 +576,8 @@ components:
           type: string
           description: Error code
       required:
-        - code
-        - detail
+      - code
+      - detail
     TokenVerifyRequestRequest:
       type: object
       properties:
@@ -539,12 +586,12 @@ components:
           minLength: 1
           description: JWT token to verify
       required:
-        - token
+      - token
   securitySchemes:
     jwtAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
 servers:
-  - url: http://localhost:8000
-    description: Local Development Server
+- url: http://localhost:8000
+  description: Local Development Server
