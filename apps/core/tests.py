@@ -1,4 +1,3 @@
-from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -7,6 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from apps.app1.models import Category, Product
 from apps.app2.models import Animal, Breed, Species
 from apps.app3.models import Genre, Movie
+from apps.auth.models import User
 
 
 class DynamicAPITestCase(APITestCase):
