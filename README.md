@@ -1,6 +1,17 @@
 # Dynamic API - API REST Universal com Django
 
-Uma API REST em Django que fornece um **endpoint universal** para operações CRUD em múltiplos bancos de dados e modelos. A inovação principal é o roteamento baseado em parâmetros de consulta: `/api/v1/?db=db1&table=product` acessa dinamicamente qualquer modelo em qualquer banco de dados sem endpoints codificados.
+Uma API REST em Django que ```bash
+
+# Primeiro o banco default (auth, admin, etc)
+
+python manage.py migrate
+
+# Depois cada banco de domínio específico
+
+python manage.py migrate app1 --database=db1
+python manage.py migrate app2 --database=db2
+python manage.py migrate app3 --database=db3
+```m **endpoint universal** para operações CRUD em múltiplos bancos de dados e modelos. A inovação principal é o roteamento baseado em parâmetros de consulta: `/api/v1/?db=db1&table=product` acessa dinamicamente qualquer modelo em qualquer banco de dados sem endpoints codificados.
 
 ## Arquitetura
 
@@ -29,6 +40,8 @@ Uma API REST em Django que fornece um **endpoint universal** para operações CR
 - Outras dependências listadas em `requirements.txt`
 
 ## Instalação
+
+> **Observação**: Nos comandos abaixo, use `python` para Windows e `python3` para Linux/macOS.
 
 1. Clone o repositório:
 
@@ -72,12 +85,12 @@ DB1_NAME=nome_db1
 
 ```bash
 # Primeiro o banco default (auth, admin, etc)
-python3 manage.py migrate
+python manage.py migrate
 
 # Depois cada banco de domínio específico
-python3 manage.py migrate app1 --database=db1
-python3 manage.py migrate app2 --database=db2
-python3 manage.py migrate app3 --database=db3
+python manage.py migrate app1 --database=db1
+python manage.py migrate app2 --database=db2
+python manage.py migrate app3 --database=db3
 ```
 
 2. Crie um superusuário:
