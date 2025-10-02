@@ -76,7 +76,7 @@ class DynamicAPITestCase(APITestCase):
         if pk:
             return reverse(
                 "dynamic-detail",
-                kwargs={"database": database, "model": model, "pk": pk},
+                kwargs={"database": database, "model": model, "id": pk},
             )
         return reverse("dynamic-list", kwargs={"database": database, "model": model})
 

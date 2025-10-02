@@ -1,6 +1,5 @@
 from typing import Any, Dict
 
-from django.db import models
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
     OpenApiParameter,
@@ -9,6 +8,7 @@ from drf_spectacular.utils import (
     inline_serializer,
 )
 from rest_framework import serializers, viewsets
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 
 from apps.core.serializers import DynamicModelSerializer
@@ -158,23 +158,20 @@ class DynamicModelViewSet(viewsets.ModelViewSet):
         Get the list of items for this view.
         Determines the appropriate database and model from the URL.
         """
-        try:
-            database_name = self.kwargs.get("database", "default")
-            model_name = self.kwargs.get("model")
+        database_name = self.kwargs.get("database", "default")
+        model_name = self.kwargs.get("model")
 
-            if not model_name:
-                return models.Model.objects.none()
+        if not model_name:
+            raise ValidationError("Model name is required")
 
-            # Get model class based on URL parameters
-            model = get_model_from_path(database_name, model_name)
+        # Get model class based on URL parameters
+        model = get_model_from_path(database_name, model_name)
 
-            # Validate and get correct database
-            db = get_database_for_model(model, database_name)
+        # Validate and get correct database
+        db = get_database_for_model(model, database_name)
 
-            # Return queryset using the appropriate database
-            return model.objects.using(db).all()
-        except Exception:
-            return models.Model.objects.none()
+        # Return queryset using the appropriate database
+        return model.objects.using(db).all()
 
     def get_serializer_context(self) -> Dict[str, Any]:
         """
@@ -189,19 +186,17 @@ class DynamicModelViewSet(viewsets.ModelViewSet):
         Return the serializer instance that should be used for validating and
         deserializing input, and for serializing output.
         """
-        try:
-            serializer_class = self.get_serializer_class()
-            database = self.kwargs.get("database", "default")
-            model_name = self.kwargs.get("model")
 
-            if not model_name:
-                raise ValueError("Model name is required")
+        serializer_class = self.get_serializer_class()
+        database = self.kwargs.get("database", "default")
+        model_name = self.kwargs.get("model")
 
-            model = get_model_from_path(database, model_name)
-            kwargs["model"] = model
-            kwargs["database"] = database
-            kwargs["context"] = self.get_serializer_context()
-            return serializer_class(*args, **kwargs)
-        except Exception as e:
-            # Retornar um serializer vazio para documentação
-            return DynamicModelSerializer(model=models.Model)
+        if not model_name:
+            raise ValidationError("Model name is required")
+
+        # Get model class based on URL parameters
+        model = get_model_from_path(database, model_name)
+        kwargs["model"] = model
+        kwargs["database"] = database
+        kwargs["context"] = self.get_serializer_context()
+        return serializer_class(*args, **kwargs)
