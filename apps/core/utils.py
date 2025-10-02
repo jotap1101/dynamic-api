@@ -30,11 +30,11 @@ def get_model_from_path(database_name: str, model_name: str):
     try:
         with connections[database_name].cursor() as cursor:
             cursor.execute("SELECT 1")
+    except Exception as e:
         logger = logging.getLogger(__name__)
         logger.exception(
             f"Error connecting to database '{database_name}' in get_model_from_path"
         )
-    except Exception as e:
         raise NotFound(
             f"Cannot connect to database '{database_name}'. "
             "The database might not be running or might have connection issues."
