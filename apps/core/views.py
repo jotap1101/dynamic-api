@@ -8,7 +8,7 @@ from drf_spectacular.utils import (
     inline_serializer,
 )
 from rest_framework import serializers, viewsets
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import IsAuthenticated
 
 from apps.core.serializers import DynamicModelSerializer
@@ -158,20 +158,28 @@ class DynamicModelViewSet(viewsets.ModelViewSet):
         Get the list of items for this view.
         Determines the appropriate database and model from the URL.
         """
-        database_name = self.kwargs.get("database", "default")
-        model_name = self.kwargs.get("model")
 
-        if not model_name:
-            raise ValidationError("Model name is required")
+        try:
+            database_name = self.kwargs.get("database", "default")
+            model_name = self.kwargs.get("model")
 
-        # Get model class based on URL parameters
-        model = get_model_from_path(database_name, model_name)
+            if not model_name:
+                raise ValidationError("Model name is required")
 
-        # Validate and get correct database
-        db = get_database_for_model(model, database_name)
+            # Get model class based on URL parameters
+            model = get_model_from_path(database_name, model_name)
 
-        # Return queryset using the appropriate database
-        return model.objects.using(db).all()
+            # Validate and get correct database
+            db = get_database_for_model(model, database_name)
+
+            # Return queryset using the appropriate database
+            return model.objects.using(db).all()
+        except NotFound as e:
+            raise NotFound(str(e))
+        except Exception as e:
+            raise NotFound(
+                f"Error accessing {model_name} in database {database_name}: {str(e)}"
+            )
 
     def get_serializer_context(self) -> Dict[str, Any]:
         """

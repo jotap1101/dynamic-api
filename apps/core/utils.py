@@ -36,6 +36,19 @@ def get_model_from_path(database_name: str, model_name: str):
     if not target_model:
         raise NotFound(f"Model '{model_name}' not found")
 
+    # Verify if the table exists in the specified database
+    with connections[database_name].cursor() as cursor:
+        table_name = target_model._meta.db_table
+        try:
+            # Try to do a zero-impact query to check if table exists
+            cursor.execute(f"SELECT 1 FROM {table_name} WHERE 1=0")
+        except Exception:
+            raise NotFound(
+                f"Table '{table_name}' does not exist in database '{database_name}'. "
+                f"Make sure that the model '{model_name}' belongs to the correct database "
+                f"and all migrations have been applied."
+            )
+
     return target_model
 
 
