@@ -1,4 +1,5 @@
 from typing import Any, Dict
+import logging
 
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
@@ -237,9 +238,9 @@ class DynamicModelViewSet(viewsets.ModelViewSet):
         except NotFound as e:
             raise NotFound(str(e))
         except Exception as e:
-            raise NotFound(
-                f"Error accessing {model_name} in database {database_name}: {str(e)}"
-            )
+            import logging, traceback
+            logging.error(f"Error accessing {model_name} in database {database_name}.\n{traceback.format_exc()}")
+            raise NotFound("An internal error occurred while accessing the requested data.")
 
     def get_serializer_context(self) -> Dict[str, Any]:
         """
