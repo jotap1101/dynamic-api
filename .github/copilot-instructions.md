@@ -2,105 +2,122 @@
 
 ## Project Overview
 
-This is a Django-based REST API project that enables dynamic database and model access through URL patterns. The project uses Django REST Framework (DRF) and follows a multi-database architecture where different apps use separate databases. The core API is built to dynamically route requests to appropriate databases and models based on URL parameters.
+This is a Django-based REST API that provides a **single universal endpoint** for CRUD operations across multiple databases and models. The core innovation is query parameter-based routing: `/api/v1/?db=db1&table=product` dynamically accesses any model in any database without hardcoded endpoints.
 
-## Project Structure
+## Architecture & Data Flow
 
-- `config/` - Core Django project configuration
-- `apps/` - Main application modules
-  - `core/` - Central API module with dynamic routing
-  - `app1/` - First context module using database 'db1'
-  - `app2/` - Second context module using database 'db2'
-  - `app3/` - Third context module using database 'db3'
+### Multi-Database Design
 
-### Database Architecture
+```
+├── default db (db.sqlite3) - Django auth/admin tables + custom User model
+├── db1 (db1.sqlite3) - Products & Categories (e-commerce domain)
+├── db2 (db2.sqlite3) - Animals, Species & Breeds (veterinary domain)
+└── db3 (db3.sqlite3) - Movies & Genres (entertainment domain)
+```
 
-- Each app (except core) has its own dedicated database
-- Default database contains Django's built-in tables (auth, admin, etc.)
-- Database routing is handled through URL patterns: `/api/v1/<database_name_or_alias>/<model_name_or_alias>/`
+### Request Flow Pattern
 
-## Key Technologies & Dependencies
+1. **URL**: `/api/v1/?db=db1&table=product` (query params, not path segments)
+2. **Core Logic**: `apps.core.utils.get_model_from_path()` resolves model from params
+3. **Database Router**: `config.routers.DatabaseRouter` enforces isolation
+4. **Dynamic Serializer**: `DynamicModelSerializer` adapts to any model structure
+5. **ViewSet**: Single `DynamicModelViewSet` handles all models
 
-- Django 5.2.6 with REST Framework 3.16.1
-- JWT Authentication (djangorestframework_simplejwt)
-- API Documentation (drf-spectacular)
-- Redis for caching
-- Environment management with django-environ
-- CORS handling with django-cors-headers
+## Critical Implementation Patterns
 
-## Development Environment Setup
+### Dynamic Model Resolution
 
-1. Environment Variables:
+```python
+# apps/core/utils.py - Core discovery logic
+def get_model_from_path(database_name: str, model_name: str):
+    # Validates database exists, finds model by name across all apps
+    # Verifies table exists in target database before returning
+```
 
-   - Project uses `.env` file for configuration
-   - Required variables: `SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS`
-   - See `config/settings.py` for environment variable usage
+### Database Routing Rules (config/routers.py)
 
-2. Development Workflow:
+- `app1` models → `db1` database
+- `app2` models → `db2` database
+- `app3` models → `db3` database
+- `auth`/`admin`/`core` models → `default` database (enforced)
 
-   ```bash
-   # Create and activate virtual environment
-   python -m venv venv
-   source venv/bin/activate  # Linux/Mac
+### UUID Primary Keys Convention
 
-   # Install dependencies
-   pip install -r requirements.txt
+All models use `UUIDField(primary_key=True, default=uuid4)` for consistent identification across databases.
 
-   # Run migrations
-   python manage.py migrate
+## Development Workflows
 
-   # Start development server
-   python manage.py runserver
-   ```
+### Adding New Database Context
 
-## Project Conventions
+1. Create new app: `python manage.py startapp app4`
+2. Add database config to `settings.DATABASES['db4']`
+3. Update `routers.DatabaseRouter.route_app_labels['app4'] = 'db4'`
+4. Create models with UUID primary keys
+5. Run migrations: `python manage.py migrate --database=db4`
 
-1. App Organization:
+### Testing Dynamic API
 
-   - Each app follows standard Django structure with models, views, urls
-   - Core functionality in `apps.core` handles API routing and authentication
-   - Context apps (`app1`, `app2`, `app3`) contain models and business logic
+```bash
+# Populate test data across all databases
+python scripts/populate_databases.py
 
-2. API Development:
-   - Uses DRF ModelViewSets and ModelSerializers for CRUD operations
-   - Dynamic routing based on database and model aliases
-   - Custom actions with `@action` decorator for non-CRUD operations
-   - RESTful conventions for endpoint design
-   - Protected access using JWT authentication
-   - CORS configuration for controlled cross-origin access
+# Test endpoints
+curl -H "Authorization: Bearer <token>" \
+  "http://localhost:8000/api/v1/?db=db1&table=product"
+```
 
-## Common Development Tasks
+### Authentication Flow
 
-- Create new app: `python manage.py startapp app_name`
-- Generate migrations: `python manage.py makemigrations`
-- Run tests: `python manage.py test`
-- Create superuser: `python manage.py createsuperuser`
+```bash
+# Get tokens
+curl -X POST http://localhost:8000/api/v1/token/ \
+  -d '{"username":"admin","password":"admin"}'
 
-## Key Integration Points
+# Use access token (5-minute lifetime)
+curl -H "Authorization: Bearer <access_token>" <endpoint>
+```
 
-1. URL Configuration:
+## Project-Specific Conventions
 
-   - Main URLs defined in `config/urls.py`
-   - App-specific URLs in respective `app_name/urls.py`
+### Query Parameter Validation
 
-2. Authentication & Security:
+`DynamicModelViewSet.initial()` enforces required `db` and `table` params on every request.
 
-   - JWT-based authentication using djangorestframework_simplejwt
-   - Token configuration in settings
-   - CORS configuration via django-cors-headers
-   - Custom permissions to secure database/model access
+### Environment Configuration
 
-3. Caching:
-   - Redis integration for caching
-   - Cache settings in Django configuration
+```python
+# Required .env variables
+SECRET_KEY=your-secret-key
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+# Optional database overrides
+DB1_ENGINE=django.db.backends.postgresql
+DB1_NAME=custom_db1_name
+```
 
-## Best Practices
+### Custom Auth Model
 
-1. Always use environment variables for sensitive data
-2. Follow Django's app-based modular structure
-3. Implement proper API versioning
-4. Use Django's built-in testing framework
-5. Follow RESTful conventions for endpoint design
-6. Secure database and model access through proper authentication and permissions
-7. Use custom actions (@action decorator) for non-CRUD operations within ViewSets
-8. Keep database context isolated within respective apps
+`AUTH_USER_MODEL = "apps.auth.User"` extends AbstractUser with UUID primary key.
+
+## API Documentation & Testing
+
+- **OpenAPI Schema**: `http://localhost:8000/api/schema/`
+- **Swagger UI**: `http://localhost:8000/api/schema/swagger-ui/`
+- **ReDoc**: `http://localhost:8000/api/schema/redoc/`
+
+## Integration Points
+
+### CORS Configuration
+
+Preconfigured for `localhost:3000` (frontend) and `localhost:8000` (API) in development.
+
+### JWT Token Settings
+
+- Access token: 5 minutes (short for security)
+- Refresh token: 1 day
+- Token blacklisting enabled for logout functionality
+
+### Migration Strategy
+
+Always specify database: `python manage.py migrate --database=db1`
+Use `scripts/populate_databases.py` for consistent test data across environments.
