@@ -80,13 +80,23 @@ class DynamicModelViewSet(viewsets.ModelViewSet):
         # Return queryset using the appropriate database
         return model.objects.using(db).all()
 
+    def get_serializer_context(self):
+        """
+        Extra context provided to the serializer class.
+        """
+        context = super().get_serializer_context()
+        context["database"] = self.kwargs.get("database")
+        return context
+
     def get_serializer(self, *args, **kwargs):
         """
         Return the serializer instance that should be used for validating and
         deserializing input, and for serializing output.
         """
         serializer_class = self.get_serializer_class()
-        kwargs["model"] = get_model_from_path(
-            self.kwargs.get("database"), self.kwargs.get("model")
-        )
+        database = self.kwargs.get("database")
+        model = get_model_from_path(database, self.kwargs.get("model"))
+        kwargs["model"] = model
+        kwargs["database"] = database
+        kwargs["context"] = self.get_serializer_context()
         return serializer_class(*args, **kwargs)
