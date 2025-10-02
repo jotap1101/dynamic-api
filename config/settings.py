@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "drf_spectacular_sidecar",
     # Local apps
     "apps.core.apps.CoreConfig",
+    "apps.auth.apps.AuthConfig",
     "apps.app1.apps.App1Config",
     "apps.app2.apps.App2Config",
     "apps.app3.apps.App3Config",
@@ -154,6 +155,9 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Custom user model
+AUTH_USER_MODEL = "custom_auth.User"
 
 # Django REST Framework settings
 REST_FRAMEWORK = {
