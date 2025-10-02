@@ -117,17 +117,20 @@ class CRUDTests(DynamicAPITestCase):
         # Test db1 (products)
         response = self.client.get(self.get_dynamic_url("db1", "product"))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["count"], 1)
 
         # Test db2 (animals)
         response = self.client.get(self.get_dynamic_url("db2", "animal"))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["count"], 1)
 
         # Test db3 (movies)
         response = self.client.get(self.get_dynamic_url("db3", "movie"))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["count"], 1)
 
     def test_create_objects(self):
         """Test creating objects in different databases."""

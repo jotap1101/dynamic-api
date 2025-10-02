@@ -208,8 +208,8 @@ class DynamicModelViewSet(viewsets.ModelViewSet):
             # Validate and get correct database
             db = get_database_for_model(model, database_name)
 
-            # Return queryset using the appropriate database
-            return model.objects.using(db).all()
+            # Return ordered queryset using the appropriate database
+            return model.objects.using(db).all().order_by("id")
         except NotFound as e:
             raise NotFound(str(e))
         except Exception as e:
