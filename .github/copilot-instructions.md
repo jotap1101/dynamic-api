@@ -71,7 +71,7 @@ curl -H "Authorization: Bearer <token>" \
 ```bash
 # Get tokens
 curl -X POST http://localhost:8000/api/v1/token/ \
-  -d '{"username":"admin","password":"admin"}'
+  -d '{"username":"admin","password":"123"}'
 
 # Use access token (5-minute lifetime)
 curl -H "Authorization: Bearer <access_token>" <endpoint>
