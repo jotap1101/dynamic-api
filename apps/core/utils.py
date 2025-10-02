@@ -19,9 +19,23 @@ def get_model_from_path(database_name: str, model_name: str):
         NotFound: If database or model is not found
         ValidationError: If validation fails
     """
-    # Validate database exists
+    # Validate database exists and is accessible
     if database_name not in connections.databases:
-        raise NotFound(f"Database '{database_name}' not found")
+        raise NotFound(
+            f"Database '{database_name}' is not configured. "
+            f"Available databases are: {', '.join(connections.databases.keys())}"
+        )
+
+    # Try to establish a connection to verify database is accessible
+    try:
+        with connections[database_name].cursor() as cursor:
+            cursor.execute("SELECT 1")
+    except Exception as e:
+        raise NotFound(
+            f"Cannot connect to database '{database_name}'. "
+            f"The database might not be running or might have connection issues. "
+            f"Error: {str(e)}"
+        )
 
     # Get all apps that might contain our model
     all_models = apps.get_models()
@@ -67,10 +81,33 @@ def get_database_for_model(model, database_name: str):
         ValidationError: If database validation fails
     """
     if database_name not in connections.databases:
-        raise ValidationError(f"Invalid database: {database_name}")
+        available_dbs = ", ".join(connections.databases.keys())
+        raise ValidationError(
+            f"Database '{database_name}' is not configured. "
+            f"Available databases are: {available_dbs}"
+        )
 
     # If model is auth-related, always use default database
-    if model._meta.app_label in ["auth", "admin", "sessions", "contenttypes"]:
+    auth_apps = ["auth", "admin", "sessions", "contenttypes"]
+    if model._meta.app_label in auth_apps:
+        if database_name != "default":
+            raise ValidationError(
+                f"Model '{model._meta.model_name}' from app '{model._meta.app_label}' "
+                f"can only be accessed through the 'default' database, not '{database_name}'. "
+                f"Authentication-related models ({', '.join(auth_apps)}) are restricted "
+                f"to the default database."
+            )
         return "default"
+
+    # Try to establish a connection to verify database is accessible
+    try:
+        with connections[database_name].cursor() as cursor:
+            cursor.execute("SELECT 1")
+    except Exception as e:
+        raise ValidationError(
+            f"Cannot connect to database '{database_name}'. "
+            f"The database might not be running or might have connection issues. "
+            f"Error: {str(e)}"
+        )
 
     return database_name
