@@ -236,7 +236,9 @@ class DynamicModelViewSet(viewsets.ModelViewSet):
             # Return ordered queryset using the appropriate database
             return model.objects.using(db).all().order_by("id")
         except NotFound as e:
-            raise NotFound(str(e))
+            import logging
+            logging.error(f"NotFound exception in get_queryset: {e}")
+            raise NotFound("The requested resource was not found.")
         except Exception as e:
             import logging, traceback
             logging.error(f"Error accessing {model_name} in database {database_name}.\n{traceback.format_exc()}")
