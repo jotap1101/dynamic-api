@@ -72,13 +72,15 @@ class DynamicAPITestCase(APITestCase):
         )
 
     def get_dynamic_url(self, database, model, pk=None):
-        """Helper method to generate dynamic API URLs."""
+        """Helper method to generate dynamic API URLs with query parameters."""
+        # Constrói a URL base
         if pk:
-            return reverse(
-                "dynamic-detail",
-                kwargs={"database": database, "model": model, "id": pk},
-            )
-        return reverse("dynamic-list", kwargs={"database": database, "model": model})
+            url = reverse("dynamic-detail", kwargs={"id": pk})
+        else:
+            url = reverse("dynamic-list")
+
+        # Adiciona os query parameters
+        return f"{url}?db={database}&table={model}"
 
 
 class AuthenticationTests(DynamicAPITestCase):
@@ -236,31 +238,55 @@ class CRUDTests(DynamicAPITestCase):
 class ErrorHandlingTests(DynamicAPITestCase):
     """Test error handling scenarios."""
 
+    def test_missing_parameters(self):
+        """Test that db and table parameters are required."""
+        # Test missing db parameter
+        url = reverse("dynamic-list") + "?table=product"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("db", response.data)
+
+        # Test missing table parameter
+        url = reverse("dynamic-list") + "?db=db1"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("table", response.data)
+
+        # Test missing both parameters
+        url = reverse("dynamic-list")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("db", response.data)
+        self.assertIn("table", response.data)
+
     def test_invalid_database(self):
         """Test accessing an invalid database."""
-        response = self.client.get(self.get_dynamic_url("invalid_db", "product"))
+        url = reverse("dynamic-list") + "?db=invalid_db&table=product"
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_invalid_model(self):
         """Test accessing an invalid model."""
-        response = self.client.get(self.get_dynamic_url("db1", "invalid_model"))
+        url = reverse("dynamic-list") + "?db=db1&table=invalid_model"
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_invalid_object_id(self):
         """Test accessing an invalid object ID."""
-        response = self.client.get(
-            self.get_dynamic_url(
-                "db1", "product", "00000000-0000-0000-0000-000000000000"
+        url = (
+            reverse(
+                "dynamic-detail", kwargs={"id": "00000000-0000-0000-0000-000000000000"}
             )
+            + "?db=db1&table=product"
         )
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_invalid_data_creation(self):
         """Test creating objects with invalid data."""
         # Test with missing required fields
-        response = self.client.post(
-            self.get_dynamic_url("db1", "product"), {"description": "Only Description"}
-        )
+        url = reverse("dynamic-list") + "?db=db1&table=product"
+        response = self.client.post(url, {"description": "Only Description"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         # Test with invalid field value

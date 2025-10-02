@@ -5,9 +5,7 @@ from apps.core.views import DynamicModelViewSet
 
 # Create router for dynamic viewset
 router = DefaultRouter()
-router.register(
-    r"(?P<database>[^/.]+)/(?P<model>[^/.]+)", DynamicModelViewSet, basename="dynamic"
-)
+router.register(r"", DynamicModelViewSet, basename="dynamic")
 
 urlpatterns = [
     # Dynamic API endpoints

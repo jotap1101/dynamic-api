@@ -17,19 +17,19 @@ from apps.core.utils import get_database_for_model, get_model_from_path
 # Parâmetros comuns para todas as operações
 common_parameters = [
     OpenApiParameter(
-        name="database",
+        name="db",
         description="Nome do banco de dados (ex: 'default', 'db1', 'db2', 'db3')",
         required=True,
         type=str,
-        location=OpenApiParameter.PATH,
+        location=OpenApiParameter.QUERY,
         enum=["default", "db1", "db2", "db3"],
     ),
     OpenApiParameter(
-        name="model",
-        description="Nome do modelo a ser acessado (ex: 'category', 'product')",
+        name="table",
+        description="Nome da tabela a ser acessada (ex: 'category', 'product')",
         required=True,
         type=str,
-        location=OpenApiParameter.PATH,
+        location=OpenApiParameter.QUERY,
     ),
 ]
 
@@ -167,22 +167,30 @@ class DynamicModelViewSet(viewsets.ModelViewSet):
     """
     Dynamic API ViewSet for accessing any model in any configured database.
 
-    URL Pattern: /api/v1/{database}/{model}/
+    URL Pattern: /api/v1/
 
-    Parameters:
-    - database: Name of the target database (e.g., 'default', 'db1', 'db2', 'db3')
-    - model: Name of the model to access (e.g., 'user', 'category', 'product')
+    Required Query Parameters:
+    - db: Name of the target database (e.g., 'default', 'db1', 'db2', 'db3')
+    - table: Name of the table/model to access (e.g., 'user', 'category', 'product')
 
     Features:
-    - Automatic model detection from URL parameters
+    - Automatic model detection from query parameters
     - Database routing based on model and database name
     - Full CRUD operations support
     - JWT authentication required
+    - Consistent error handling for missing parameters
 
     Examples:
-    - GET /api/v1/db1/product/ - List all products from db1
-    - POST /api/v1/db2/animal/ - Create new animal in db2
-    - GET /api/v1/db3/movie/123/ - Get specific movie from db3
+    - GET /api/v1/?db=db1&table=product - List all products from db1
+    - POST /api/v1/?db=db2&table=animal - Create new animal in db2
+    - GET /api/v1/123/?db=db3&table=movie - Get specific movie from db3
+    - PUT /api/v1/123/?db=db1&table=product - Update product in db1
+    - DELETE /api/v1/123/?db=db2&table=animal - Delete animal in db2
+
+    Error Responses:
+    - 400 Bad Request: When 'db' or 'table' parameters are missing
+    - 404 Not Found: When database or model doesn't exist
+    - 401 Unauthorized: When authentication is missing or invalid
     """
 
     permission_classes = [IsAuthenticated]
@@ -192,15 +200,19 @@ class DynamicModelViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """
         Get the list of items for this view.
-        Determines the appropriate database and model from the URL.
+        Determines the appropriate database and model from query parameters.
         """
 
         try:
-            database_name = self.kwargs.get("database", "default")
-            model_name = self.kwargs.get("model")
+            # Obtém os parâmetros da query string
+            database_name = self.request.query_params.get("db")
+            model_name = self.request.query_params.get("table")
 
+            # Validação dos parâmetros obrigatórios
+            if not database_name:
+                raise ValidationError({"db": "Database parameter is required"})
             if not model_name:
-                raise ValidationError("Model name is required")
+                raise ValidationError({"table": "Table parameter is required"})
 
             # Get model class based on URL parameters
             model = get_model_from_path(database_name, model_name)
@@ -222,7 +234,7 @@ class DynamicModelViewSet(viewsets.ModelViewSet):
         Extra context provided to the serializer class.
         """
         context = super().get_serializer_context()
-        context["database"] = self.kwargs.get("database", "default")
+        context["database"] = self.request.query_params.get("db", "default")
         return context
 
     def get_serializer(self, *args: Any, **kwargs: Any) -> DynamicModelSerializer:
@@ -232,11 +244,14 @@ class DynamicModelViewSet(viewsets.ModelViewSet):
         """
 
         serializer_class = self.get_serializer_class()
-        database = self.kwargs.get("database", "default")
-        model_name = self.kwargs.get("model")
+        database = self.request.query_params.get("db")
+        model_name = self.request.query_params.get("table")
 
+        # Validação dos parâmetros obrigatórios
+        if not database:
+            raise ValidationError({"db": "Database parameter is required"})
         if not model_name:
-            raise ValidationError("Model name is required")
+            raise ValidationError({"table": "Table parameter is required"})
 
         # Get model class based on URL parameters
         model = get_model_from_path(database, model_name)
