@@ -2,7 +2,7 @@ from django.apps import apps
 from django.core.exceptions import ValidationError
 from django.db import connections
 from rest_framework.exceptions import NotFound
-
+import logging
 
 def get_model_from_path(database_name: str, model_name: str):
     """
@@ -31,10 +31,13 @@ def get_model_from_path(database_name: str, model_name: str):
         with connections[database_name].cursor() as cursor:
             cursor.execute("SELECT 1")
     except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.exception(
+            f"Error connecting to database '{database_name}' in get_model_from_path"
+        )
         raise NotFound(
             f"Cannot connect to database '{database_name}'. "
-            f"The database might not be running or might have connection issues. "
-            f"Error: {str(e)}"
+            "The database might not be running or might have connection issues."
         )
 
     # Get all apps that might contain our model
